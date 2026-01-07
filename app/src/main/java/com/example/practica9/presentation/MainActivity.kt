@@ -1,19 +1,24 @@
 package com.example.practica9.presentation
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import com.example.practica9.R
 import kotlin.math.sqrt
 import com.google.firebase.database.DatabaseReference // <--- NUEVO
 import com.google.firebase.database.FirebaseDatabase // <--- NUEVO
+import com.google.firebase.messaging.FirebaseMessaging
 
 class MainActivity : Activity(), SensorEventListener {
 
@@ -65,6 +70,25 @@ class MainActivity : Activity(), SensorEventListener {
         // "movimientos" será el nombre de la carpeta en la nube donde se guarde el número
         val database = FirebaseDatabase.getInstance()
         myRef = database.getReference("movimientos")
+
+        // Pedir permiso de notificaciones si es necesario (Android 13+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+            }
+        }
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w("FCM_TEST", "Error al obtener el token", task.exception)
+                return@addOnCompleteListener
+            }
+
+            // Obtener el nuevo token
+            val token = task.result
+
+            // Imprimirlo en el Logcat
+            Log.d("FCM_TEST", "MI TOKEN ES: $token")
+        }
     }
 
     override fun onResume() {
